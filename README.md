@@ -66,7 +66,10 @@ Além disso, a [Documentação do Flask](https://flask.palletsprojects.com/en/2.
  * [Conectando o ORM com banco de dados;](#ormcombancodedados)
  * [Conexão com as tabelas;](#conexaocomastabelas)
  * [Adequando as rotas ao banco de dados;](#adequandorotas)
- 
+ * [Reestruturando o código;](#reestruturandoocodigo)
+ * [Completando o CRUD (*Update*);](#completandoocrud1)
+ * [Completando o CRUD (*Delete*);](#completandoocrud2)
+
 *******
 
 <div id='oqueeFlask'/> 
@@ -433,3 +436,171 @@ E precisamos “comitar” isso:
 
 E pronto, essa rota está em sintonia com o banco de dados
 
+<div id='reestruturandoocodigo'/>
+<h4>Reestruturando o código:</h4>
+
+Como nossa aplicação está dentro de um único arquivo Python e está ficando muito grande, precisamos organizar ela.
+Para isso vamos reestruturar o código. 
+Então criamos um arquivo chamado `models.py` e colocamos os dois models que criamos anteriormente para fazer a ponte com as tabelas do banco de dados. E apagamos esses models do arquivo `jogoteca.py`. 
+
+O arquivo `models.py` precisa do meu db que é a instanciação do SQL Alchemy, então vamos fazer a importação.
+
+`from jogoteca import db`
+
+Vamos criar também um arquivo python especifico para as rotas chamado `views.py`. Recortamos todas as rotas do arquivo `jogoteca.py` e colamos nesse novo arquivo.
+Precisamos fazer algumas importações para o arquivo `views.py`. Voltando no arquivo `jogoteca.py` percebemos que algumas bibliotecas só são utilizadas dentro das rotas.
+Portanto, vamos copiar todas essas bibliotecas e colar no arquivo `views.py` e apagar elas do arquivo `jogoteca.py`.
+
+`from flask import render_template, request, redirect, session, flash, url_for`
+
+Também precisamos fazer a importação da nossa aplicação para dentro do arquivo `views.py`.
+
+`from jogoteca import app`
+
+E também precisamos fazer a importação de nossos *models*.
+
+`from models import Jogos, Usuarios`
+
+Agora só precisamos importar o db para o arquivo `views.py`.
+
+`from models import app, db`
+
+Para deixar ainda mais organizado o nosso código, vamos criar um arquivo para deixar as configurações da nossa aplicação.
+Esse arquivo vai se chamar `config.py`. Dentro dele vamos colocar a variável da uri que se conecta no banco de dados.
+Além disso, a *secret_key* também é uma configuração, então também vamos coloca-la dentro do arquivo `config.py`.
+
+Vamos fazer algumas mudanças. Em vez de `app.secret_key` vamos chamar apenas `SECRET_KEY = 'alura'`.
+Vamos criar uma variável universal com o nome `SQLALCHEMY_DATABASE_URI` que vai conter todas as informações.
+Voltando em `jogoteca.py` colocamos `app.config.from_pyfile()`, ou seja, a nossa própria aplicação Flask dá a opção de puxarmos as configurações de dentro de um arquivo Python.
+Só precisamos passar o nome do arquivo dentro do *from pyfile*.
+
+`app.config.from_pyfile('config.py')`
+
+Precisamos colocar o seguinte código dentro do arquivo `jogoteca.py`.
+
+`if __name__ == '__main__':`
+
+Isso significa que quando rodarmos o arquivo que fez a importação do arquivo `jogoteca.py`, tudo que estiver dentro desse *if* não vai rodar dentro daquele arquivo que está fazendo a importação, só vai rodar quando estivermos rodando o próprio arquivo `jogoteca.py`.
+
+Agora precisamos importar todas as rodas para dentro de `jogoteca.py`.
+
+`from views import *`
+
+Esse asterisco significa tudo, quero fazer a importação de todas as rotas.
+
+Agora com tudo organizado podemos colocar a aplicação para rodar. 
+
+
+<div id='completandoocrud1'/>
+<h4>Completando o CRUD (<i>Update</i>):</h4>
+
+Para poder fazer alterações nos jogos precisamos de algumas coisas:
+
+* Um botão, com o nome "editar", do lado de cada item. Essa botão nos enviaria para uma página de formulário;
+* Novo template para a página de formulário onde podemos alterar as informações do item;
+* Uma nova rota de "editar";
+* Uma nova rota de "atualizar".
+
+A rota "editar" vai ser bem parecida com a rota "novo".
+
+```
+@app.route('/editar')
+def editar():
+    if 'usuario_logado' not in session or session['usuario_logado'] == None:
+        return redirect(url_for('login', proxima=url_for('editar')))
+    return render_template('editar.html', titulo='Editando Jogo')
+```
+O template `editar.html` também será parecido com o template `novo.html`. Então copiamos o template de `novo.html` e colocamos no template `editar.html`, e fizemos algumas alterações.
+Quando as informações forem alteradas serão enviadas para uma nova rota, que vai se chamar "atualizar".
+Então adicionamos essa informação no template `editar.html`.
+
+`<form action="{{ url_for('atualizar') }}" method="post">`
+
+Vamos criar a rota atualizar:
+
+```
+@app.route('/atualizar', methods=['POST',])
+def atualizar():
+    pass
+```
+Por enquanto ficará assim.
+
+Agora vamos criar o botão "editar". No template `lista.html` criamos uma nova coluna com a tag.
+
+`<td><a> href="{{ url_for('editar') }}"<Editar</a></td>`
+
+E pronto!
+
+Quando vamos editar um jogo precisamos que as informações daquele jogo apareçam.
+Além disso precisamos ter uma distinção de formulário entre os jogos. 
+então vamos tentar persistir as informações pelas camadas que temos da aplicação.
+No template `lista.html` dentro da `url_for` colocamos uma variável como id e passo o id do jogo específico. 
+
+`<td><a href="{{ url_for('editar', id=jogo.id) }}">Editar</a></td>`
+
+Agora vamos editar a rota "editar" para ela capturar as informações do id.
+Contudo, só passar o id não é suficiente, precisamos fazer uma `query`dentro do banco de dados para trazer o objeto jogo para passar as informações para o template `editar.html`.
+E a rota "editar" ficou assim:
+
+```
+@app.route('/editar/<int:id>')
+def editar(id):
+    if 'usuario_logado' not in session or session['usuario_logado'] == None:
+        return redirect(url_for('login', proxima=url_for('editar', id=id)))
+    jogo = Jogos.query.filter_by(id=id).first()
+    return render_template('editar.html', titulo='Editando Jogo', jogo=jogo)
+```
+Agora no `editar.html` nos campos de inputs vamos adicionar os seguintes valores:
+
+`value="{{ jogo.nome }}"`
+
+`value="{{ jogo.categoria }}"`
+
+`value="{{ jogo.console }}"`
+
+Agora quando clicarmos em um jogo, ele já vai vir com as informações!
+
+Precisamos acabar a rota "atualizar". Como a rota "atualizar" está recebendo as informações do formulário de `editar.html`, vamos passar as informações do id através desse formulário.
+Dentro de `editar.html` criamos um novo input.
+
+`<input type="hidden" name="id" value="{{ jogo.id }}">`
+
+E a rota "atualizar" ficou da seguinte forma:
+
+```
+@app.route('/atualizar', methods=['POST',])
+def atualizar():
+    jogo = Jogos.query.filter_by(id=request.form['id']).first()
+    jogo.nome = request.form['nome']
+    jogo.categoria = request.form['categoria']
+    jogo.console = request.form['console']
+
+    db.session.add(jogo)
+    db.session.commit()
+
+    return redirect( url_for('index'))
+```
+
+Agora podemos fazer as alterações.
+
+<div id='completandoocrud2'/>
+<h4>Completando o CRUD (<i>Delete</i>):</h4>
+
+Vamos criar o botão "deletar". Lá na `lista.html` onde criamos o botão "editar" e vamos criar do lado dele o botão "deletar".
+
+`<a href="{{ url_for('deletar', id=jogo.id) }}">Deletar</a>`
+
+Também precisamos criar uma rota para deletar.
+
+```
+@app.route('/deletar/<int:id>')
+def deletar(id):
+    if 'usuario_logado' not in session or session['usuario_logado'] == None:
+        return redirect(url_for('login'))
+
+    Jogos.query.filter_by(id=id).delete()
+    db.session.commit()
+    flash('Jogo deletado com sucesso!')
+    return redirect(url_for('index'))
+```
+Pronto, mais uma etapa concluida com sucesso!
