@@ -604,3 +604,110 @@ def deletar(id):
     return redirect(url_for('index'))
 ```
 Pronto, mais uma etapa concluida com sucesso!
+
+<div id='implementandoimagens'/>
+<h4>Implementando imagens:</h4>
+
+Queremos que cada novo jogo adicionado poça relacionar uma imagem, então vamos implementar isso.
+Precisamos adicionar um novo botão na rota `/novo`, ou seja, estamos falanco do formulário então é preciso alterar o template `novo.html`.
+Vamos adicionar um novo *input*:
+
+`<input type="file" name="arquivo" accept="jpg">`
+
+Colocamos o tipo de *input* que vai ser *file*, o nome que é importante para depois associar a informação na rota, e além disso também informamos o tipo de arquivo que ele vai aceitar.
+Queremos que ele aceite apenas arquivos do tipo `.jpg` que é um tipo de arquivo de imagem.
+
+Agora vamos ajustar essas informações na rota `/criar`.
+
+```
+arquivo = request.files['arquivo']
+arquivo.save(f'uploads/{arquivo.filename}')
+```
+
+Criamos uma variável com o nome `arquivo` e dentro dessa variável vamos receber as informações da imagem que serão passadas no formulário.
+Para receber as informações de um formulário uso o *request*, porém não será o *request.forms* pois não estamos trabalhando com informações simples, estamos recebendo informações de um arquivo. 
+Então usamos o *request.files* e dentro desse request colocamos o nome do arquivo que colocamos lá na tag de *input* que no caso vai ser `arquivo`.
+Para guardar essas informações que recebi na variável arquivo criamos uma pasta dentro da aplicação chamada "uploads".
+Então logo depois que eu receber as informações do formulário a respeito da imagem e declarar essa variável arquivo, na linha seguinte vou colocar, `arquivo.save`.
+Esse comando vai salvar as informações dessa variável arquivo no caminho que direcionar ele dentro do ".save".
+
+Ainda é preciso adicionar o *enctype* lá no formulário. O *enctype* é o tipo de arquivo que quero adicionar. Lá em `novo.html` na tag de formulário tem *form*, tem *action* que vai estar passando as informações para a rota criar e o método *post*. Então do lado colocamos o *enctype*. Isso vai permitir que mandemos realmente arquivos para o nosso servidor.
+
+`enctype="multipart/form-data"`
+
+Para gantir que vamos ter arquivos únicos para cada jogo que cadastrarmos, vamos alterar o caminho no `arquivo.save`.
+
+`arquivo.save(f'uploads/capa{novo_jogo.id}.jpg')`
+
+Trocamos `arquivo.filename` por `novo_jogo.id` e logo depois colocamos `.jpg` para indicar que é uma imagem. 
+Para não deixar só o `id` vamos colocar a capa antes da chave.
+
+Também vamos melhorar a forma de encontrar o diretório *uploads*. 
+Dentro de `config.py` vamos criar uma variável `UPLOAD_PATH` e colocar dentro algum caminho relativo.
+
+`UPLOAD_PATH = os.path.abspath(__file__)`
+
+O *dunder file* `__file__` é uma forma de referenciar o próprio arquivo que estamos. 
+E para achar o caminho absoluto que este arquivo está utilizamos a biblioteca OS Operating System.
+
+Só que ainda precisamos captar o cominho absoluto desde o início e não só desde "jogoteca". 
+Assim, podemos usar a função do OS `ps.path.dirname()` e colocamos tudo dentro dessa função.
+
+```
+UPLOAD_PATH = os.path.dirname(os.path.abspath(__file__)) + '/uploads'
+```
+
+E para achar o caminho "uploads" basta fazermos uma concatenação de String `+ '/uploads'`.
+
+Em `views.py` na rota `/criar` vamos adicionar a variável `upload_path` e dentro dela colocamos a informação da aplicação.
+
+`upload_path = app.config['UPLOAD_PATH']`
+
+E no `arquivo.save`:
+
+`arquivo.save(f'{upload_path}/capa{novo_jogo.id}.jpg')'`
+
+Pronto. Agora temos um caminho melhor para colocarmos as imagens.
+
+Agora vamos mudar a interface do formulário de "Novo Jogo" adicionando uma imagem de capa padrão.
+
+Em `novo.html` , logo depois da tag form, criamos uma estrutura de tags que vai comportar a imagem. 
+```
+ <figure class="imag-thumbnail col-md-4">
+          <img class="img-fluid" src="{{ url_for('imagem', nome_arquivo='capa_padrao.jpg') }}">
+          <figcaption>
+            <label class="fileContainer">
+              Mudar Capa
+              <input type="file" name="arquivo" accept=".jpg"
+            </label>
+          </figcaption>
+        </figure>
+```
+
+Vamos em `views.py` e criamos uma nova rota. 
+
+```
+@app.route('/uploads/<nome_arquivo>')
+def imagem(nome_arquivo):
+    return send_from_directory('uploads', nome_arquivo)
+```
+
+Agora vamos melhorar um pouco o estilo. Vamos criar um novo arquivo CSS chamado `app.css`.
+
+Obs: o código desse arquivo já foi disponibilizado pré-pronto.
+
+Em `template.html` habilitamos na aplicação o arquivo CSS.
+
+```commandline
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+```
+Ainda precisamos ir no template `novo.html` e colocar as devidas classes que temos em cada uma das nossas tags.
+
+`<figure class="img-thumbnail col-md-4">`
+
+`<img class="img-fluid">`
+
+`label class="fileContainer"`
+
+Nossa página já está melhor!
+
