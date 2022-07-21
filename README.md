@@ -69,6 +69,7 @@ Além disso, a [Documentação do Flask](https://flask.palletsprojects.com/en/2.
  * [Reestruturando o código;](#reestruturandoocodigo)
  * [Completando o CRUD (*Update*);](#completandoocrud1)
  * [Completando o CRUD (*Delete*);](#completandoocrud2)
+ * [Implementando imagens;](#implementandoimagens)
 
 *******
 
