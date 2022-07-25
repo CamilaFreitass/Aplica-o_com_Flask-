@@ -15,6 +15,9 @@
     <td>HTML</td>
     <td>CSS</td>
     <td>Bootstrap</td>
+    <td>jQuery</td>
+    <td>Flask WTF</td>
+    <td>Flask Bcrypt</td>
   </tr>
   <tr>
     <td>3.10.2</td>
@@ -22,6 +25,9 @@
     <td>5.0</td>
     <td>3.0</td>
     <td>5.1.x</td>
+    <td>3.6.0</td>
+    <td>1.0.0</td>
+    <td>0.7.1</td>
   </tr>
 </table>
 
@@ -70,6 +76,9 @@ Além disso, a [Documentação do Flask](https://flask.palletsprojects.com/en/2.
  * [Completando o CRUD (*Update*);](#completandoocrud1)
  * [Completando o CRUD (*Delete*);](#completandoocrud2)
  * [Implementando imagens;](#implementandoimagens)
+ * [O que é CACHE;](#oqueecache)
+ * [Flask WTF e validação de formulário;](#flaskwtfevalidacaodeformulario)
+ * [Aumentando a segurança da aplicação;](#aumentandoasegurancadaaplicacao)
 
 *******
 
@@ -712,3 +721,33 @@ Ainda precisamos ir no template `novo.html` e colocar as devidas classes que tem
 
 Nossa página já está melhor!
 
+<div id='oqueecache'/>
+<h4>O que é CACHE:</h4>
+
+É uma memória que o navegador mantém brevemente de algumas coisas que ele busca no servidor.
+Por exemplo, quando eu envio uma imagem pelo método *Post* através do formulário, essa imagem vai ser mandada para o servidor e vai ser gravada em uma pasta, só que isso também vai ser gravado no cache do meu navegador.
+Então o que vai acontecer é que em vez do navegador fazer um método request para ir no servidor e puxar a imagem, muitas vezes ele vai recorrer ao cache que já está mais perto dele. Isso ocorre pois o *cache* acaba sendo mais rápido do que fazer *requests* o tempo todo.
+O problema ocorre quando vamos substituir a imagem, pois substituimos a imagem mas o nome continua sendo a mesma coisa. Portanto, isso acaba gerando confusão na memória *cache* do navegador, ou seja, a memória *cache* continua com a memória da imagem antiga e não consegue entender que atualizamos para uma nova imagem.
+Então ela continua pegando a imagem e mostrando para nós a imagem antiga.
+Contudo, queremos que a aplicação sempre recorra ao servidor para trazer a imagem. 
+Assim, precisamos adicionar um nome único para cada imagem e uma forma de fazer isso é utilizando a biblioteca `time`.
+
+Dentro da biblioteca `time` existe uma função chamada `time` que devolve uma série de números que fazem referência aos segundos do momento. 
+
+<div id='flaskwtfevalidacaodeformulario'/>
+<h4>Flask WTF e validação de formulário:</h4>
+
+Como não é uma boa prática ficar adicionando condicionais dentro do desenvolvimento de aplicações Web.
+Então para nos ajudar na integração de formulários e validação de formulários existem extensões dentro dos *framework*.
+No caso do Flask temos o Flask WTForms que permite criar os próprios formulários através da linguagem Python integrada com HTML, e ainda pode fazer avalidação de uma forma mais dinâmica.
+
+<div id='aumentandoasegurancadaaplicacao'/>
+<h4>Aumentando a segurança da aplicação:</h4>
+
+É legal termos uma forma de criptografar a senha, pois em vez de passar a senha como ela é de forma *hard coding* para o banco de dados, passamos um *hash* que é uma série de caracteres supostamente aleatóriosque não fazem sentido para a pessoa que consegue ele.
+
+**hard coding**: é a prática de desenvolvimento de sofware de incorporar dados diretamente no código-fonte de uma programa ou outro objeto executável, em vez de obter dados de fontes externas ou gerá-los em tempo de execução.
+
+Para implementar a criptografia existe uma extensão do Flask chamada Flask Bcrypt.
+
+Agora nossa aplicação está mais completa!
